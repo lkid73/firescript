@@ -4,19 +4,16 @@
 --      License: GNU GPL 3.0      --
 --================================--
 
--- Chat
+-- Notifications (native GTA feed above the minimap)
+
+function showNotification(text)
+	SetNotificationTextEntry("STRING")
+	AddTextComponentSubstringPlayerName(text)
+	DrawNotification(false, true)
+end
 
 function sendMessage(text)
-	TriggerEvent(
-		"chat:addMessage",
-		{
-			templateId = "firescript",
-			args = {
-				("FireScript v%s"):format(Version),
-				text
-			}
-		}
-	)
+	showNotification(("~r~FireScript~s~ %s"):format(text))
 end
 
 -- Table functions

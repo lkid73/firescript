@@ -148,13 +148,7 @@ RegisterCommand(
 
 		if Fire:remove(fireIndex) then
 			sendMessage(source, "Stopping fire #" .. fireIndex)
-			TriggerClientEvent("pNotify:SendNotification", source, {
-				text = "Fire " .. fireIndex .. " going out...",
-				type = "info",
-				timeout = 5000,
-				layout = "centerRight",
-				queue = "fire"
-			})
+			TriggerClientEvent('fireClient:notify', source, ("Fire #%s going out..."):format(fireIndex))
 		end
 	end,
 	false
@@ -171,13 +165,7 @@ RegisterCommand(
 		Fire:removeAll()
 
 		sendMessage(source, "Stopping fires")
-		TriggerClientEvent("pNotify:SendNotification", source, {
-			text = "Fires going out...",
-			type = "info",
-			timeout = 5000,
-			layout = "centerRight",
-			queue = "fire"
-		})
+		TriggerClientEvent('fireClient:notify', source, "Fires going out...")
 	end,
 	false
 )
@@ -283,13 +271,7 @@ RegisterCommand(
 
 		sendMessage(source, "Stopping scenario #" .. scenarioID)
 
-		TriggerClientEvent("pNotify:SendNotification", source, {
-			text = "Fire going out...",
-			type = "info",
-			timeout = 5000,
-			layout = "centerRight",
-			queue = "fire"
-		})
+		TriggerClientEvent('fireClient:notify', source, "Fire going out...")
 	end,
 	false
 )

@@ -10,8 +10,6 @@ Version = GetResourceMetadata(GetCurrentResourceName(), "version")
 --              CHAT              --
 --================================--
 
-TriggerEvent("chat:addTemplate", "firescript", '<div style="text-indent: 0 !important; padding: 0.5vw; margin: 0.05vw; color: rgba(255,255,255,0.9);background-color: rgba(250,26,56, 0.8); border-radius: 4px;"><b>{0}</b> {1} </div>')
-
 TriggerEvent('chat:addSuggestion', '/startfire', 'Creates a fire', {
 	{
 		name = "spread",
@@ -434,6 +432,14 @@ AddEventHandler(
 	'fireClient:createDispatch',
 	function(dispatchNumber, coords)
 		Dispatch:create(dispatchNumber, coords)
+	end
+)
+
+RegisterNetEvent('fireClient:notify')
+AddEventHandler(
+	'fireClient:notify',
+	function(text)
+		showNotification(text)
 	end
 )
 

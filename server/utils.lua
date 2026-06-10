@@ -8,17 +8,8 @@
 
 function sendMessage(source, text, customName)
 	if source > 0 then
-		TriggerClientEvent(
-			"chat:addMessage",
-			source,
-			{
-				templateId = "firescript",
-				args = {
-					((customName ~= nil) and customName or ("FireScript v%s"):format(Version)),
-					text
-				}
-			}
-		)
+		local name = (customName ~= nil) and customName or "FireScript"
+		TriggerClientEvent('fireClient:notify', source, ("~r~%s~s~ %s"):format(name, text))
 	else
 		print(("[FireScript v%s] %s"):format(Version, text))
 	end
