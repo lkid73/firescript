@@ -434,6 +434,43 @@ RegisterCommand(
 	false
 )
 
+RegisterCommand(
+	'showscenarios',
+	function(source, args, rawCommand)
+		if source < 1 then
+			sendMessage(source, ("%s scenario(s) registered."):format(table.length(Fire.scenario)))
+			return
+		end
+
+		if not Whitelist:isWhitelisted(source, "firescript.manage") then
+			sendMessage(source, "Insufficient permissions.")
+			return
+		end
+
+		local scenarioID = tonumber(args[1])
+		local scenarios = Fire.scenario
+
+		if scenarioID then
+			if not Fire.scenario[scenarioID] then
+				sendMessage(source, "No such scenario.")
+				return
+			end
+			scenarios = { [scenarioID] = Fire.scenario[scenarioID] }
+		end
+
+		-- Scenarios with at least one bound fire are currently burning
+		local activeScenarios = {}
+		for id, fires in pairs(Fire.binds) do
+			if next(fires) then
+				activeScenarios[id] = true
+			end
+		end
+
+		TriggerClientEvent('fireClient:showScenarios', source, scenarios, activeScenarios)
+	end,
+	false
+)
+
 --================================--
 --           FIRE SYNC            --
 --================================--

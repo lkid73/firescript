@@ -16,6 +16,25 @@ function sendMessage(text)
 	showNotification(("~r~FireScript~s~ %s"):format(text))
 end
 
+function DrawText3D(coords, text)
+	local onScreen, x, y = World3dToScreen2d(coords.x, coords.y, coords.z)
+	if not onScreen then
+		return
+	end
+
+	local dist = #(GetGameplayCamCoords() - coords)
+	local scale = (1 / dist) * 2 * (1 / GetGameplayCamFov()) * 100
+
+	SetTextScale(0.0, 0.55 * scale)
+	SetTextFont(0)
+	SetTextCentre(true)
+	SetTextColour(255, 255, 255, 215)
+	SetTextDropshadow(1, 0, 0, 0, 255)
+	SetTextEntry("STRING")
+	AddTextComponentString(text)
+	DrawText(x, y)
+end
+
 -- Table functions
 
 function countElements(t)

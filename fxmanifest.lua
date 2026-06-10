@@ -16,6 +16,7 @@ client_scripts {
 	"client/utils.lua",
 	"client/fire.lua",
 	"client/dispatch.lua",
+	"client/scenarios.lua",
 	"client/main.lua",
 }
 

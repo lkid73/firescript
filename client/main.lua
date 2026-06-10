@@ -144,6 +144,15 @@ TriggerEvent('chat:addSuggestion', '/randomfires', 'Manages the random fire spaw
 	}
 })
 
+TriggerEvent('chat:addSuggestion', '/showscenarios', 'Displays scenario blips, flame markers and info on the map', {
+	{
+		name = "scenarioID",
+		help = "(optional) Show only this scenario"
+	}
+})
+
+TriggerEvent('chat:addSuggestion', '/hidescenarios', 'Clears the scenario display')
+
 TriggerEvent('chat:addSuggestion', '/setscenariodifficulty', 'Sets a difficulty specifically for one scenario', {
 	{
 		name = "scenarioID",

@@ -17,6 +17,7 @@ function Fire:createFlame(fireIndex, flameIndex, coords)
 				flames = {},
 				particles = {},
 				flameParticles = {},
+				bigFlameParticles = {},
 				sound = {}
 			}
         end
@@ -70,7 +71,27 @@ function Fire:removeFlame(fireIndex, flameIndex)
 		)
 		self.active[fireIndex].flameParticles[flameIndex] = nil
 	end
-	
+
+	if self.active[fireIndex].bigFlameParticles[flameIndex] then
+		local bigFlameParticles = self.active[fireIndex].bigFlameParticles[flameIndex]
+
+		Citizen.SetTimeout(
+			1000,
+			function()
+				local scale = 1.0
+				while scale > 0.3 do
+					scale = scale - 0.01
+					SetParticleFxLoopedScale(bigFlameParticles, scale)
+					Citizen.Wait(60)
+				end
+
+				StopParticleFxLooped(bigFlameParticles, false)
+				RemoveParticleFx(bigFlameParticles, true)
+			end
+		)
+		self.active[fireIndex].bigFlameParticles[flameIndex] = nil
+	end
+
 	self.active[fireIndex].flameCoords[flameIndex] = nil
 
 	if self.active[fireIndex] ~= nil and countElements(self.active[fireIndex].flames) < 1 then
@@ -195,6 +216,13 @@ Citizen.CreateThread(
 								end
 							end
 
+							if not HasNamedPtfxAssetLoaded("scr_solomon3") then
+								RequestNamedPtfxAsset("scr_solomon3")
+								while not HasNamedPtfxAssetLoaded("scr_solomon3") do
+									Wait(10)
+								end
+							end
+
 							Fire.active[fireIndex].flameCoords[flameIndex] = vector3(coords.x, coords.y, z)
 
 							Fire.active[fireIndex].sound[flameIndex] = GetSoundId()
@@ -217,9 +245,27 @@ Citizen.CreateThread(
 								false
 							)
 						
-							SetPtfxAssetNextCall("scr_trevor3")
-						
+							SetPtfxAssetNextCall("scr_solomon3")
+
+							-- Wide ground-fire effect ("big fire"), hugging the terrain below the flame point
 							Fire.active[fireIndex].flameParticles[flameIndex] = StartParticleFxLoopedAtCoord(
+								"scr_trev4_trailer_fire",
+								Fire.active[fireIndex].flameCoords[flameIndex].x,
+								Fire.active[fireIndex].flameCoords[flameIndex].y,
+								Fire.active[fireIndex].flameCoords[flameIndex].z - 0.5,
+								0.0,
+								0.0,
+								0.0,
+								1.0,
+								false,
+								false,
+								false,
+								false
+							)
+
+							SetPtfxAssetNextCall("scr_trevor3")
+
+							Fire.active[fireIndex].bigFlameParticles[flameIndex] = StartParticleFxLoopedAtCoord(
 								"scr_trev3_trailer_plume",
 								Fire.active[fireIndex].flameCoords[flameIndex].x,
 								Fire.active[fireIndex].flameCoords[flameIndex].y,
@@ -233,7 +279,7 @@ Citizen.CreateThread(
 								false,
 								false
 							)
-	
+
 						else
 							Fire.active[fireIndex].flames[flameIndex] = nil
 						end
