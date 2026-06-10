@@ -1,18 +1,12 @@
 --================================--
---       FIRE SCRIPT v2.0.0       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
 
 Whitelist = {
 	players = {},
-	config = {},
-	__index = self,
-	init = function(object)
-		object = object or {players = {}, config = {}}
-		setmetatable(object, self)
-		return object
-	end
+	config = {}
 }
 
 function Whitelist:check(serverId)

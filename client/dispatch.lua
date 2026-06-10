@@ -1,5 +1,5 @@
 --================================--
---       FIRE SCRIPT v1.6.3       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
@@ -7,14 +7,7 @@
 Dispatch = {
 	lastCall = nil,
 	blips = {},
-	playingTone = nil,
-	__index = self,
-	init = function(o)
-		o = o or {lastCall = {}, blips = {}, playingTone = nil}
-		setmetatable(o, self)
-		self.__index = self
-		return o
-	end
+	playingTone = nil
 }
 
 function Dispatch:renderRoute(coords)

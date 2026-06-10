@@ -1,5 +1,5 @@
 --================================--
---       FIRE SCRIPT v1.7.6       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
@@ -161,10 +161,17 @@ TriggerEvent('chat:addSuggestion', '/setscenariodifficulty', 'Sets a difficulty 
 --        SYNC ON CONNECT         --
 --================================--
 
+-- Sync once on first spawn; respawns don't need a full teardown/recreate
+local hasSynced = false
+
 RegisterNetEvent('playerSpawned')
 AddEventHandler(
 	'playerSpawned',
 	function()
+		if hasSynced then
+			return
+		end
+		hasSynced = true
 		print("Requested synchronization..")
 		TriggerServerEvent('fireManager:requestSync')
 	end
@@ -177,6 +184,12 @@ AddEventHandler(
 		if resourceName == GetCurrentResourceName() then
 			-- Check the command whitelist
 			TriggerServerEvent('fireManager:checkWhitelist')
+
+			-- Covers resource restarts mid-session, where playerSpawned won't refire
+			if not hasSynced then
+				hasSynced = true
+				TriggerServerEvent('fireManager:requestSync')
+			end
 
 			if Config.Dispatch.toneSources then
 				while not RequestScriptAudioBank('toneaudio/firescript_alarm', false) do
@@ -333,15 +346,21 @@ RegisterNetEvent('fireClient:synchronizeFlames')
 AddEventHandler(
 	'fireClient:synchronizeFlames',
 	function(fires)
-		syncInProgress = true
-		Fire:removeAll(
+		withSyncLock(
 			function()
-				for k, v in pairs(fires) do
-					for _k, _v in ipairs(v) do
-						Fire:createFlame(k, _k, _v.c)
+				Fire:removeAll(
+					function()
+						for k, v in pairs(fires) do
+							for _k, _v in pairs(v) do
+								-- Server fire entries mix numeric flame keys with
+								-- metadata string keys; only numeric ones are flames
+								if type(_k) == "number" then
+									Fire:createFlame(k, _k, _v.c)
+								end
+							end
+						end
 					end
-				end
-				syncInProgress = false
+				)
 			end
 		)
 	end
@@ -351,12 +370,11 @@ RegisterNetEvent('fireClient:removeFire')
 AddEventHandler(
 	'fireClient:removeFire',
 	function(fireIndex)
-		while syncInProgress do
-			Citizen.Wait(10)
-		end
-		syncInProgress = true
-		Fire:remove(fireIndex)
-		syncInProgress = false
+		withSyncLock(
+			function()
+				Fire:remove(fireIndex)
+			end
+		)
 	end
 )
 
@@ -364,13 +382,9 @@ RegisterNetEvent('fireClient:removeAllFires')
 AddEventHandler(
 	'fireClient:removeAllFires',
 	function()
-		while syncInProgress do
-			Citizen.Wait(10)
-		end
-		syncInProgress = true
-		Fire:removeAll(
+		withSyncLock(
 			function()
-				syncInProgress = false
+				Fire:removeAll()
 			end
 		)
 	end
@@ -380,26 +394,24 @@ RegisterNetEvent("fireClient:removeFlame")
 AddEventHandler(
     "fireClient:removeFlame",
 	function(fireIndex, flameIndex)
-		while syncInProgress do
-			Citizen.Wait(10)
-		end
-		syncInProgress = true
-		Fire:removeFlame(fireIndex, flameIndex)
-		syncInProgress = false
-    end
+		withSyncLock(
+			function()
+				Fire:removeFlame(fireIndex, flameIndex)
+			end
+		)
+	end
 )
 
 RegisterNetEvent("fireClient:createFlame")
 AddEventHandler(
     "fireClient:createFlame",
 	function(fireIndex, flameIndex, coords)
-		while syncInProgress do
-			Citizen.Wait(10)
-		end
-		syncInProgress = true
-		Fire:createFlame(fireIndex, flameIndex, coords)
-		syncInProgress = false
-    end
+		withSyncLock(
+			function()
+				Fire:createFlame(fireIndex, flameIndex, coords)
+			end
+		)
+	end
 )
 
 -- Dispatch

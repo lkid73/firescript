@@ -6,14 +6,7 @@
 
 Fire = {
 	active = {},
-	removed = {},
-	__index = self,
-	init = function(o)
-		o = o or {active = {}, removed = {}}
-		setmetatable(o, self)
-		self.__index = self
-		return o
-	end
+	removed = {}
 }
 
 function Fire:createFlame(fireIndex, flameIndex, coords)
@@ -160,11 +153,9 @@ Citizen.CreateThread(
 Citizen.CreateThread(
 	function()
 		while true do
-			while syncInProgress do
-				Citizen.Wait(10)
-			end
+			withSyncLock(
+				function()
 			local pedCoords = GetEntityCoords(PlayerPedId())
-			syncInProgress = true
 			for fireIndex, v in pairs(Fire.active) do
 				for flameIndex, coords in pairs(Fire.active[fireIndex].flameCoords) do
 					Citizen.Wait(10)
@@ -249,7 +240,8 @@ Citizen.CreateThread(
 					end
 				end
 			end
-			syncInProgress = false
+				end
+			)
 			Citizen.Wait(1500)
 		end
 	end

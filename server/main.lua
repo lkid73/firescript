@@ -1,19 +1,10 @@
 --================================--
---       FIRE SCRIPT v2.0.0       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
 
---================================--
---         VERSION CHECK          --
---================================--
-
 Version = GetResourceMetadata(GetCurrentResourceName(), "version")
-LatestVersionFeed = "https://api.github.com/repos/gimicze/firescript/releases/latest"
-
-Citizen.CreateThread(
-	checkVersion
-)
 
 --================================--
 --          INITIALIZE            --
@@ -44,6 +35,7 @@ AddEventHandler(
 function onPlayerDropped()
 	Whitelist:removePlayer(source)
 	Dispatch:unsubscribe(source)
+	Dispatch.expectingInfo[source] = nil
 end
 
 RegisterNetEvent('playerDropped')
@@ -86,7 +78,8 @@ AddEventHandler(
 						if dispatchMessage then
 							Dispatch:create(dispatchMessage, coords)
 						else
-							Dispatch.expectingInfo[_source] = true
+							-- Token expires so an unresponsive client can't bank it for later
+							Dispatch.expectingInfo[_source] = GetGameTimer() + 30000
 							TriggerClientEvent('fd:dispatch', _source, coords)
 						end
 					end
@@ -455,7 +448,8 @@ RegisterCommand(
 		local message = Fire:setScenarioDifficulty(scenarioID, difficulty) and ("Scenario #%s set to difficulty %s"):format(scenarioID, difficulty) or ("Scenario #%s doesn't exist"):format(scenarioID)
 
 		sendMessage(source, message)
-	end
+	end,
+	false
 )
 
 --================================--
@@ -537,7 +531,7 @@ AddEventHandler(
 			return
 		end
 
-		Dispatch:subscribe(playerSource, not (isFirefighter))
+		Dispatch:subscribe(playerSource, isFirefighter)
 	end
 )
 
@@ -551,7 +545,7 @@ AddEventHandler(
 			return
 		end
 
-		Dispatch:subscribe(playerSource)
+		Dispatch:unsubscribe(playerSource)
 	end
 )
 
@@ -559,7 +553,7 @@ RegisterNetEvent('fireDispatch:create')
 AddEventHandler(
 	'fireDispatch:create',
 	function(text, coords)
-		if not Config.Dispatch.disableCalls and (source < 1 or Dispatch.expectingInfo[source]) then
+		if not Config.Dispatch.disableCalls and (source < 1 or (Dispatch.expectingInfo[source] and GetGameTimer() < Dispatch.expectingInfo[source])) then
 			text = tostring(text):gsub("%^%d", ""):sub(1, 160)
 			Dispatch:create(text, coords)
 			if source > 0 then

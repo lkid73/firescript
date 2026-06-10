@@ -1,5 +1,5 @@
 --================================--
---       FIRE SCRIPT v1.7.6       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
@@ -21,14 +21,31 @@ end
 
 -- Table functions
 
-function countElements(table)
+function countElements(t)
 	local count = 0
-	if type(table) == "table" then
-		for k, v in pairs(table) do
+	if type(t) == "table" then
+		for k, v in pairs(t) do
 			count = count + 1
 		end
 	end
 	return count
 end
 
+-- Sync lock
+
 syncInProgress = false
+
+-- Serializes fire state mutations. pcall guarantees the lock is released
+-- even if the protected code errors; a stuck flag would otherwise
+-- permanently deadlock every fire event handler on this client.
+function withSyncLock(fn)
+	while syncInProgress do
+		Citizen.Wait(10)
+	end
+	syncInProgress = true
+	local ok, err = pcall(fn)
+	syncInProgress = false
+	if not ok then
+		print(("[FireScript] Error in synchronized section: %s"):format(err))
+	end
+end

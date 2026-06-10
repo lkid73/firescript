@@ -1,36 +1,8 @@
 --================================--
---       FIRE SCRIPT v1.6.3       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
-
-function checkVersion()
-	PerformHttpRequest(
-		LatestVersionFeed,
-		function(errorCode, data, headers)
-			if tonumber(errorCode) == 200 then
-				data = json.decode(data)
-				if not data then
-					print("^3[FireScript]^7 Couldn't check version - no data returned!")
-					return
-				end
-				if data.tag_name == "v" .. Version then
-					print("^2[FireScript]^7 Up to date.")
-				else
-					print(("^3[FireScript]^7 The script isn't up to date! Please see version %s."):format(data.tag_name))
-				end
-			else
-				print(("^3[FireScript]^7 Couldn't check version! Error code %s."):format(errorCode))
-				print(LatestVersionFeed)
-			end
-		end,
-		'GET',
-		'',
-		{
-			['User-Agent'] = ("FireScript v%s"):format(Version)
-		}
-	)
-end
 
 -- Chat
 

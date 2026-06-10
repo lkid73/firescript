@@ -1,15 +1,18 @@
-fx_version 'adamant'
+fx_version 'cerulean'
 
 games {
 	'gta5'
 }
 
+lua54 'yes'
+
 author 'GIMI, foregz, Albo1125'
 version '2.0.2'
 description 'Fire Script'
 
+shared_script "config.lua"
+
 client_scripts {
-	"config.lua",
 	"client/utils.lua",
 	"client/fire.lua",
 	"client/dispatch.lua",
@@ -17,7 +20,6 @@ client_scripts {
 }
 
 server_scripts {
-	"config.lua",
 	"server/utils.lua",
 	"server/whitelist.lua",
 	"server/fire.lua",

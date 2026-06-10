@@ -10,13 +10,7 @@ Fire = {
 	active = {},
 	binds = {},
 	activeBinds = {},
-	__index = self,
-	init = function(o)
-		o = o or {scenario = {}, random = {}, active = {}, binds = {}, activeBinds = {}}
-		setmetatable(o, self)
-		self.__index = self
-		return o
-	end
+	lastFireIndex = 0
 }
 
 function Fire:create(coords, maximumSpread, spreadChance, difficulty)
@@ -209,7 +203,7 @@ function Fire:startScenario(scenarioID, triggerDispatch, dispatchPlayer)
 					if self.scenario[scenarioID].message ~= nil then
 						Dispatch:create(self.scenario[scenarioID].message, dispatchCoords)
 					else
-						Dispatch.expectingInfo[dispatchPlayer] = true
+						Dispatch.expectingInfo[dispatchPlayer] = GetGameTimer() + 30000
 						TriggerClientEvent('fd:dispatch', dispatchPlayer, dispatchCoords)
 					end
 				end

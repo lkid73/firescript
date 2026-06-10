@@ -1,5 +1,5 @@
 --================================--
---       FIRE SCRIPT v1.7.2       --
+--       FIRE SCRIPT v2.0.2       --
 --  by GIMI (+ foregz, Albo1125)  --
 --      License: GNU GPL 3.0      --
 --================================--
@@ -8,13 +8,7 @@ Dispatch = {
 	_players = {},
 	_firefighters = {},
 	lastNumber = 0,
-	expectingInfo = {},
-	__index = self,
-	init = function(object)
-		object = object or {_players = {}, _firefighters = {}, lastNumber = 0, expectingInfo = {}}
-		setmetatable(object, self)
-		return object
-	end
+	expectingInfo = {}
 }
 
 function Dispatch:create(text, coords)
@@ -34,6 +28,9 @@ end
 
 function Dispatch:subscribe(serverId, isFirefighter)
 	serverId = tonumber(serverId)
+	if not serverId then
+		return
+	end
 	self._players[serverId] = true
 	if isFirefighter then
 		self:addFirefighter(serverId)
@@ -42,18 +39,25 @@ end
 
 function Dispatch:unsubscribe(serverId)
 	serverId = tonumber(serverId)
+	if not serverId then
+		return
+	end
 	self._players[serverId] = nil
 	self:removeFirefighter(serverId)
 end
 
 function Dispatch:addFirefighter(serverId)
 	serverId = tonumber(serverId)
-	self._firefighters[serverId] = true
+	if serverId then
+		self._firefighters[serverId] = true
+	end
 end
 
 function Dispatch:removeFirefighter(serverId)
 	serverId = tonumber(serverId)
-	self._firefighters[serverId] = nil
+	if serverId then
+		self._firefighters[serverId] = nil
+	end
 end
 
 function Dispatch:firefighters()
