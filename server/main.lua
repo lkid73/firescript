@@ -476,15 +476,11 @@ RegisterNetEvent('fireManager:createFlame')
 AddEventHandler(
 	'fireManager:createFlame',
 	function(fireIndex, coords)
-		Fire:createFlame(fireIndex, coords)
-	end
-)
+		if source > 0 and not Whitelist:isWhitelisted(source, "firescript.manage") then
+			return
+		end
 
-RegisterNetEvent('fireManager:createFire')
-AddEventHandler(
-	'fireManager:createFire',
-	function()
-		Fire:create(coords, maximumSpread, spreadChance)
+		Fire:createFlame(fireIndex, coords)
 	end
 )
 
@@ -492,6 +488,10 @@ RegisterNetEvent('fireManager:removeFire')
 AddEventHandler(
 	'fireManager:removeFire',
 	function(fireIndex)
+		if source > 0 and not Whitelist:isWhitelisted(source, "firescript.stop") then
+			return
+		end
+
 		Fire:remove(fireIndex)
 	end
 )
@@ -500,6 +500,10 @@ RegisterNetEvent('fireManager:removeAllFires')
 AddEventHandler(
 	'fireManager:removeAllFires',
 	function()
+		if source > 0 and not Whitelist:isWhitelisted(source, "firescript.stop") then
+			return
+		end
+
 		Fire:removeAll()
 	end
 )
@@ -508,6 +512,13 @@ RegisterNetEvent('fireManager:removeFlame')
 AddEventHandler(
 	'fireManager:removeFlame',
 	function(fireIndex, flameIndex)
+		fireIndex = tonumber(fireIndex)
+		flameIndex = tonumber(flameIndex)
+
+		if not (fireIndex and flameIndex) then
+			return
+		end
+
 		Fire:removeFlame(fireIndex, flameIndex)
 	end
 )
@@ -549,6 +560,7 @@ AddEventHandler(
 	'fireDispatch:create',
 	function(text, coords)
 		if not Config.Dispatch.disableCalls and (source < 1 or Dispatch.expectingInfo[source]) then
+			text = tostring(text):gsub("%^%d", ""):sub(1, 160)
 			Dispatch:create(text, coords)
 			if source > 0 then
 				Dispatch.expectingInfo[source] = nil
