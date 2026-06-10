@@ -54,19 +54,6 @@ function Dispatch:create(dispatchNumber, coords)
 
 	FlashMinimapDisplay()
 
-	Citizen.SetTimeout(
-		Config.Dispatch.removeBlipTimeout,
-		function()
-			if self.blips[dispatchNumber] and self.blips[dispatchNumber].blip then
-				RemoveBlip(blip)
-				self.blips[dispatchNumber].blip = false
-			end
-			if self.lastCall == dispatchNumber then
-				ClearGpsMultiRoute()
-			end
-		end
-	)
-
 	-- Only store the last 'Config.Dispatch.storeLast' dispatches' data.
 	if countElements(self.blips) > Config.Dispatch.storeLast then
 		local order = {}
@@ -146,6 +133,24 @@ function Dispatch:remind(dispatchNumber)
 		return false
 	end
 end
+
+-- The server resolves a call once no fire burns near it anymore
+RegisterNetEvent('fireClient:clearDispatch')
+AddEventHandler(
+	'fireClient:clearDispatch',
+	function(dispatchNumber)
+		local call = Dispatch.blips[dispatchNumber]
+
+		if call and call.blip then
+			RemoveBlip(call.blip)
+			call.blip = false
+		end
+
+		if Dispatch.lastCall == dispatchNumber then
+			ClearGpsMultiRoute()
+		end
+	end
+)
 
 --================================--
 --     DISPATCH ROUTE REMOVAL     --

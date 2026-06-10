@@ -109,6 +109,9 @@ function Fire:remove(fireIndex)
 
 	-- Indices are monotonic and never reused, so the slot can be freed entirely
 	self.active[fireIndex] = nil
+
+	Dispatch:clearResolved()
+
 	return true
 end
 
@@ -156,6 +159,8 @@ function Fire:removeAll()
 	self.activeBinds = {}
 	self.binds = {}
 	self.currentRandom = nil
+
+	Dispatch:clearResolved()
 end
 
 function Fire:register(coords, difficulty)

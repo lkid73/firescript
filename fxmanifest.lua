@@ -25,6 +25,7 @@ server_scripts {
 	"server/whitelist.lua",
 	"server/fire.lua",
 	"server/dispatch.lua",
+	"server/explosions.lua",
 	"server/main.lua",
 }
 

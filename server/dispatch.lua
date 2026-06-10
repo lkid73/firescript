@@ -8,7 +8,8 @@ Dispatch = {
 	_players = {},
 	_firefighters = {},
 	lastNumber = 0,
-	expectingInfo = {}
+	expectingInfo = {},
+	calls = {}
 }
 
 function Dispatch:create(text, coords)
@@ -19,10 +20,47 @@ function Dispatch:create(text, coords)
 	end
 
 	self.lastNumber = self.lastNumber + 1
+	self.calls[self.lastNumber] = coords
 
 	for k, v in pairs(self._players) do
 		sendMessage(k, text, ("Dispatch (#%s)"):format(self.lastNumber))
 		TriggerClientEvent('fireClient:createDispatch', k, self.lastNumber, coords)
+	end
+
+	-- Safety net: if the fire was already put out before the call went
+	-- through (dispatch is delayed), resolve the call right away.
+	Citizen.SetTimeout(
+		10000,
+		function()
+			self:clearResolved()
+		end
+	)
+end
+
+-- Removes the blip of every call that no longer has a fire burning nearby.
+-- Invoked whenever a fire fully goes out.
+function Dispatch:clearResolved()
+	local radius = Config.Dispatch.clearBlipRadius or 150.0
+
+	for number, coords in pairs(self.calls) do
+		local burning = false
+
+		for _, fire in pairs(Fire.active) do
+			for k, flame in pairs(fire) do
+				if type(k) == "number" and flame.c and #(flame.c - coords) < radius then
+					burning = true
+					break
+				end
+			end
+			if burning then
+				break
+			end
+		end
+
+		if not burning then
+			self.calls[number] = nil
+			TriggerClientEvent('fireClient:clearDispatch', -1, number)
+		end
 	end
 end
 
