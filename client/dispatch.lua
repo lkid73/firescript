@@ -83,6 +83,11 @@ function Dispatch:create(dispatchNumber, coords)
 		end
 
 		table.sort(order)
+		-- Remove the blip from the map before dropping the entry,
+		-- otherwise it stays rendered forever with no handle to clear it
+		if self.blips[order[1]].blip then
+			RemoveBlip(self.blips[order[1]].blip)
+		end
 		self.blips[order[1]] = nil
 	end
 

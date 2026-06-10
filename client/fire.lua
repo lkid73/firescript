@@ -171,15 +171,21 @@ Citizen.CreateThread(
 
 					if Fire.active[fireIndex] and Fire.active[fireIndex].flameCoords[flameIndex] and not Fire.active[fireIndex].particles[flameIndex] and #(coords - pedCoords) < 300.0 then						
 						local z = coords.z
-		
+						local ground, newZ
+						local attempts = 0
+
+						-- Cap the search: if collision isn't loaded (distant fire, interior),
+						-- the native never succeeds and this would otherwise loop forever
+						-- while holding syncInProgress, deadlocking all fire events.
 						repeat
 							Wait(0)
 							ground, newZ = GetGroundZFor_3dCoord(coords.x, coords.y, z)
 							if not ground then
 								z = z + 0.1
+								attempts = attempts + 1
 							end
-						until ground
-						z = newZ
+						until ground or attempts > 100
+						z = ground and newZ or coords.z
 	
 						Fire.active[fireIndex].flames[flameIndex] = StartScriptFire(coords.x, coords.y, z, 0, false)
 

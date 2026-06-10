@@ -24,13 +24,16 @@ function Fire:create(coords, maximumSpread, spreadChance, difficulty)
 	spreadChance = spreadChance and spreadChance or Config.Fire.fireSpreadChance
 	difficulty = difficulty and difficulty or Config.Fire.difficulty
 
-	local fireIndex = highestIndex(self.active)
-	fireIndex = fireIndex + 1
+	-- Monotonic index: never reuse a fire index, otherwise clients that
+	-- still hold the old index in their `removed` table refuse the new fire.
+	self.lastFireIndex = (self.lastFireIndex or 0) + 1
+	local fireIndex = self.lastFireIndex
 
 	self.active[fireIndex] = {
-		maxSpread = maxSpread,
+		maxSpread = maximumSpread,
 		spreadChance = spreadChance,
-		difficulty = difficulty
+		difficulty = difficulty,
+		lastFlameIndex = 0
 	}
 
 	self:createFlame(fireIndex, coords)
@@ -44,23 +47,25 @@ function Fire:create(coords, maximumSpread, spreadChance, difficulty)
 				Citizen.Wait(2000)
 				local index, flames = highestIndex(self.active, fireIndex)
 				if flames ~= 0 and flames <= maximumSpread and self.active[fireIndex] ~= nil then
-					for k, v in ipairs(self.active[fireIndex]) do
-						index, flames = highestIndex(self.active, fireIndex)
-						local rndSpread = math.random(100)
-						if flames <= maximumSpread and rndSpread <= spreadChance then
-							local x = self.active[fireIndex][k].c.x
-							local y = self.active[fireIndex][k].c.y
-							local z = self.active[fireIndex][k].c.z
-	
-							local xSpread = math.random(-3, 3)
-							local ySpread = math.random(-3, 3)
-	
-							coords = vector3(x + xSpread, y + ySpread, z)
-	
-							self:createFlame(fireIndex, coords)
-						elseif flames > maximumSpread then
-							spread = false
-							break
+					for k, v in pairs(self.active[fireIndex]) do
+						if type(k) == "number" and self.active[fireIndex][k] then
+							index, flames = highestIndex(self.active, fireIndex)
+							local rndSpread = math.random(100)
+							if flames <= maximumSpread and rndSpread <= spreadChance then
+								local x = self.active[fireIndex][k].c.x
+								local y = self.active[fireIndex][k].c.y
+								local z = self.active[fireIndex][k].c.z
+
+								local xSpread = math.random(-3, 3)
+								local ySpread = math.random(-3, 3)
+
+								coords = vector3(x + xSpread, y + ySpread, z)
+
+								self:createFlame(fireIndex, coords)
+							elseif flames > maximumSpread then
+								spread = false
+								break
+							end
 						end
 					end
 				elseif flames == 0 or self.active[fireIndex] == nil then
@@ -78,7 +83,13 @@ function Fire:create(coords, maximumSpread, spreadChance, difficulty)
 end
 
 function Fire:createFlame(fireIndex, coords)
-	local flameIndex = highestIndex(self.active, fireIndex) + 1
+	if not self.active[fireIndex] then
+		return
+	end
+
+	-- Monotonic per-fire flame index, so extinguished flame indices are never reused
+	self.active[fireIndex].lastFlameIndex = (self.active[fireIndex].lastFlameIndex or highestIndex(self.active, fireIndex)) + 1
+	local flameIndex = self.active[fireIndex].lastFlameIndex
 	self.active[fireIndex][flameIndex] = {
 		c = coords
 	}
@@ -102,7 +113,8 @@ function Fire:remove(fireIndex)
 		end
 	end
 
-	self.active[fireIndex] = {}
+	-- Indices are monotonic and never reused, so the slot can be freed entirely
+	self.active[fireIndex] = nil
 	return true
 end
 
@@ -119,13 +131,18 @@ function Fire:removeFlame(fireIndex, flameIndex, force)
 
 			Citizen.SetTimeout(1500,
 				function()
-					self.active[fireIndex][flameIndex].ignore = nil
+					if self.active[fireIndex] and self.active[fireIndex][flameIndex] then
+						self.active[fireIndex][flameIndex].ignore = nil
+					end
 				end
 			)
 		else
 			self.active[fireIndex][flameIndex] = nil
-			
-			if type(next(self.active[fireIndex])) == "string" then
+
+			-- next() may return a leftover string key (difficulty etc.) even while
+			-- numeric flame entries remain — count the flames explicitly instead.
+			local _, flamesLeft = highestIndex(self.active, fireIndex)
+			if flamesLeft == 0 then
 				self:remove(fireIndex)
 			end
 
@@ -275,7 +292,9 @@ function Fire:deleteFlame(scenarioID, flameID)
 		return false
 	end
 
-	table.remove(self.scenario[scenarioID].flames, flameID)
+	-- Don't use table.remove: it shifts the remaining flame IDs,
+	-- invalidating any IDs the user has already been shown.
+	self.scenario[scenarioID].flames[flameID] = nil
 
 	self:saveScenarios()
 
@@ -316,7 +335,7 @@ function Fire:startSpawner(frequency, chance)
 		function()
 			while spawnerActive do
 				if next(self.random) and not self.currentRandom and Dispatch:firefighters() >= Config.Fire.spawner.players then
-					if math.random(100) < chance then
+					if math.random(100) <= chance then
 						local randomscenarioID = table.random(self.random)
 						local randomPlayer = Dispatch:getRandomPlayer()
 
@@ -353,14 +372,21 @@ function Fire:loadScenarios()
 	local firesFile = loadData("fires")
 	self.random = {}
 	if firesFile ~= nil then
-		self.scenario = firesFile
-		for index, fire in pairs(self.scenario) do
+		-- JSON turns sparse numeric keys into strings ("1", "3", ...);
+		-- normalize scenario and flame keys back to numbers on load.
+		self.scenario = {}
+		for index, fire in pairs(firesFile) do
+			index = tonumber(index) or index
+			self.scenario[index] = fire
 			if fire.dispatchCoords then
-				self.scenario[index].dispatchCoords = vector3(fire.dispatchCoords.x, fire.dispatchCoords.y, fire.dispatchCoords.z)
+				fire.dispatchCoords = vector3(fire.dispatchCoords.x, fire.dispatchCoords.y, fire.dispatchCoords.z)
 			end
-			for _, flame in pairs(fire.flames) do
-				self.scenario[index].flames[_].coords = vector3(flame.coords.x, flame.coords.y, flame.coords.z)
+			local flames = {}
+			for flameID, flame in pairs(fire.flames) do
+				flame.coords = vector3(flame.coords.x, flame.coords.y, flame.coords.z)
+				flames[tonumber(flameID) or flameID] = flame
 			end
+			fire.flames = flames
 			if fire.random == true then
 				self.random[index] = true
 			end

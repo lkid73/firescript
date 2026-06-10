@@ -66,7 +66,12 @@ end
 
 function Dispatch:getRandomPlayer()
 	if not next(self._players) then
-		return next(GetPlayers()) or false
+		-- next() would return the array index (1), not a server ID
+		local players = GetPlayers()
+		if #players == 0 then
+			return false
+		end
+		return tonumber(players[math.random(#players)])
 	end
 	return table.random(self._players)
 end

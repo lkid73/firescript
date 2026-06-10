@@ -23,6 +23,7 @@ Config.Fire = {
 
 Config.Dispatch = {
     enabled = true, -- Set this to false if you don't want to use the default dispatch system
+    disableCalls = false, -- Set to true to suppress dispatch calls while keeping the rest of the dispatch system active
     timeout = 15000, -- The amount of time in ms to delay the dispatch after the fire has been created
     storeLast = 5, -- The client will store the last five dispatch coordinates for use with /remindme <dispatchNumber>
     clearGpsRadius = 20.0, -- If you don't want to automatically clear the route upon arrival, leave this to false

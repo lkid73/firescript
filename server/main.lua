@@ -311,7 +311,7 @@ RegisterCommand(
 			return
 		end
 
-		local identifier = GetPlayerIdentifier(serverId, 0)
+		local identifier = GetPlayerIdentifierByType(serverId, 'license')
 
 		if not identifier then
 			sendMessage(source, "Player not online.")

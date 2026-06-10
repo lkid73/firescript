@@ -54,18 +54,25 @@ end
 
 -- Table functions
 
-function highestIndex(table, fireIndex)
-	if not table then
+function highestIndex(t, fireIndex)
+	if not t then
 		return
 	end
-	local table = fireIndex ~= nil and table[fireIndex] or table
+	t = fireIndex ~= nil and t[fireIndex] or t
+	if not t then
+		return 0, 0
+	end
 	local index = 0
 	local count = 0
 
-	for k, v in ipairs(table) do
-		count = count + 1
-		if k >= index then
-			index = k
+	-- Use pairs and filter numeric keys: ipairs stops at the first gap,
+	-- which caused index reuse once a flame in the middle was extinguished.
+	for k, v in pairs(t) do
+		if type(k) == "number" then
+			count = count + 1
+			if k > index then
+				index = k
+			end
 		end
 	end
 

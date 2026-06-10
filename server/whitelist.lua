@@ -17,7 +17,9 @@ Whitelist = {
 
 function Whitelist:check(serverId)
 	if serverId > 0 then
-		local steamID = GetPlayerIdentifier(serverId, 0)
+		-- Identifier index 0 is whatever happens to be first (often license, not steam);
+		-- pin to the license identifier so saved entries match consistently.
+		local steamID = GetPlayerIdentifierByType(serverId, 'license')
 		if self.config[steamID] == true or IsPlayerAceAllowed(serverId, "firescript.all") then
 			self.players[serverId] = true
 		elseif self.players[serverId] ~= nil then
